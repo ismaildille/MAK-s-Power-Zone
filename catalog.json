@@ -1,0 +1,80 @@
+{
+  "settings": {
+    "currency": "MVR",
+    "whatsapp": ""
+  },
+  "products": [
+    {
+      "id": "p1",
+      "name": "Wireless Headphones",
+      "category": "Audio",
+      "price": 490,
+      "stock": 12,
+      "description": "Comfortable wireless listening.",
+      "emoji": "\ud83c\udfa7"
+    },
+    {
+      "id": "p2",
+      "name": "Smart Watch",
+      "category": "Wearables",
+      "price": 890,
+      "stock": 8,
+      "description": "Everyday smartwatch style.",
+      "emoji": "\u231a"
+    },
+    {
+      "id": "p3",
+      "name": "USB-C Charging Cable",
+      "category": "Accessories",
+      "price": 120,
+      "stock": 30,
+      "description": "Handy charging and data cable.",
+      "emoji": "\ud83d\udd0c"
+    },
+    {
+      "id": "p4",
+      "name": "Bluetooth Speaker",
+      "category": "Audio",
+      "price": 650,
+      "stock": 10,
+      "description": "Portable audio for everyday use.",
+      "emoji": "\ud83d\udd0a"
+    },
+    {
+      "id": "p5",
+      "name": "Phone Stand",
+      "category": "Accessories",
+      "price": 150,
+      "stock": 20,
+      "description": "Convenient desk phone holder.",
+      "emoji": "\ud83d\udcf1"
+    },
+    {
+      "id": "p6",
+      "name": "Wireless Mouse",
+      "category": "Computing",
+      "price": 290,
+      "stock": 14,
+      "description": "Compact mouse for work and study.",
+      "emoji": "\ud83d\uddb1\ufe0f"
+    },
+    {
+      "id": "p7",
+      "name": "Power Bank",
+      "category": "Accessories",
+      "price": 590,
+      "stock": 9,
+      "description": "Portable charging on the go.",
+      "emoji": "\ud83d\udd0b"
+    },
+    {
+      "id": "p8",
+      "name": "Gaming Keyboard",
+      "category": "Computing",
+      "price": 990,
+      "stock": 6,
+      "description": "Keyboard for your desktop setup.",
+      "emoji": "\u2328\ufe0f"
+    }
+  ]
+}
