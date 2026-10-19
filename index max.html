@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MAK’s Power Zone</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e9edf2;--ink:#10131a;--mute:#5a6372;--line:#c9d0da;--card:#fff;--acc:#1d2bff;--accink:#fff;--err:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#10131a;--ink:#eef1f6;--mute:#9aa4b5;--line:#2a3140;--card:#181d27;--acc:#6f7bff;--accink:#10131a;--err:#ff8a80}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.4 Archivo,system-ui,sans-serif;padding:env(safe-area-inset-top,0) 16px env(safe-area-inset-bottom,0)}
+main{max-width:640px;margin:0 auto;padding:24px 0 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:20px}
+h1{font-size:2.4rem;line-height:.95;font-weight:800;margin:0;letter-spacing:-.02em}
+button,input{font:inherit;color:inherit}
+button{background:var(--acc);color:var(--accink);border:0;border-radius:6px;padding:10px 14px;font-weight:700;cursor:pointer}
+button.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+button.del{background:transparent;color:var(--err);border:1.5px solid var(--line)}
+input{background:var(--card);border:1.5px solid var(--line);border-radius:6px;padding:10px;width:100%}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.panel{background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:14px;margin-bottom:16px;display:grid;gap:10px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-bottom:1.5px solid var(--line)}
+.name{font-weight:700;font-size:1.1rem}
+.price{font-weight:800;font-size:1.3rem}
+.edit{display:grid;grid-template-columns:1fr 90px;gap:8px;width:100%}
+.edit .btns{grid-column:1/3;display:flex;gap:8px}
+.msg{color:var(--err);min-height:1.2em;margin:0}
+.ok{color:var(--mute)}
+.empty{color:var(--mute);padding:24px 0}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>MAK’s<br>Power Zone</h1>
+  <div><button id="authBtn" class="ghost">Owner login</button></div>
+</header>
+
+<form id="loginForm" class="panel" hidden>
+  <input id="email" type="email" placeholder="Owner email" autocomplete="username" required>
+  <input id="pass" type="password" placeholder="Password" autocomplete="current-password" required>
+  <button type="submit">Log in</button>
+</form>
+
+<form id="addForm" class="panel" hidden>
+  <strong>Add a product</strong>
+  <input id="newName" placeholder="Product name" required>
+  <input id="newPrice" type="number" step="0.01" min="0" placeholder="Price" required>
+  <button type="submit">Add product</button>
+</form>
+
+<p id="msg" class="msg" role="alert"></p>
+<section id="list"></section>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyDAvFpFuEa86XEuHk04OZzTMMly5TsPIdo",
+  authDomain: "makspowerzone2026.firebaseapp.com",
+  databaseURL: "https://makspowerzone2026-default-rtdb.firebaseio.com",
+  projectId: "makspowerzone2026",
+  storageBucket: "makspowerzone2026.firebasestorage.app",
+  messagingSenderId: "339596539588",
+  appId: "1:339596539588:web:d18811dbdc4103c1e43b91"
+});
+const auth = firebase.auth(), db = firebase.database().ref("products");
+const $ = id => document.getElementById(id);
+let owner = false, products = {};
+
+const say = (t, ok) => { $("msg").textContent = t || ""; $("msg").className = ok ? "msg ok" : "msg"; };
+const fail = e => say(e.code === "PERMISSION_DENIED" || /permission/i.test(e.message)
+  ? "This account isn’t allowed to change products. Log in with the owner account."
+  : "Couldn’t save: " + e.message);
+const money = n => "$" + Number(n).toFixed(2);
+
+function render() {
+  const ids = Object.keys(products);
+  $("addForm").hidden = !owner;
+  $("authBtn").textContent = owner ? "Log out" : "Owner login";
+  if (!ids.length) {
+    $("list").innerHTML = '<p class="empty">' + (owner ? "No products yet. Add your first one above." : "No products yet. Check back soon.") + "</p>";
+    return;
+  }
+  $("list").innerHTML = "";
+  ids.forEach(id => {
+    const p = products[id], row = document.createElement("div");
+    row.className = "row";
+    if (!owner) {
+      row.innerHTML = '<span class="name"></span><span class="price"></span>';
+      row.children[0].textContent = p.name;
+      row.children[1].textContent = money(p.price);
+    } else {
+      row.innerHTML = '<div class="edit"><input class="n" aria-label="Name"><input class="p" type="number" step="0.01" min="0" aria-label="Price"><div class="btns"><button class="s">Save changes</button><button class="del">Delete</button></div></div>';
+      row.querySelector(".n").value = p.name;
+      row.querySelector(".p").value = p.price;
+      row.querySelector(".s").onclick = () => {
+        const name = row.querySelector(".n").value.trim(), price = parseFloat(row.querySelector(".p").value);
+        if (!name || isNaN(price)) return say("Enter a name and a price.");
+        db.child(id).set({ name, price }).then(() => say("Saved.", true)).catch(fail);
+      };
+      row.querySelector(".del").onclick = () => {
+        if (confirm("Delete " + p.name + "?")) db.child(id).remove().then(() => say("Deleted.", true)).catch(fail);
+      };
+    }
+    $("list").appendChild(row);
+  });
+}
+
+db.on("value", s => { products = s.val() || {}; render(); }, e => say("Couldn’t load products: " + e.message));
+
+auth.onAuthStateChanged(u => { owner = !!u; $("loginForm").hidden = true; render(); });
+
+$("authBtn").onclick = () => {
+  say("");
+  if (owner) auth.signOut();
+  else $("loginForm").hidden = !$("loginForm").hidden;
+};
+$("loginForm").onsubmit = e => {
+  e.preventDefault();
+  auth.signInWithEmailAndPassword($("email").value, $("pass").value)
+    .then(() => { $("pass").value = ""; say("Logged in.", true); })
+    .catch(err => say("Login failed: check your email and password, and that Email/Password sign-in is turned on in Firebase."));
+};
+$("addForm").onsubmit = e => {
+  e.preventDefault();
+  const name = $("newName").value.trim(), price = parseFloat($("newPrice").value);
+  db.push({ name, price }).then(() => { $("newName").value = ""; $("newPrice").value = ""; say("Added.", true); }).catch(fail);
+};
+</script>
+</body>
+</html>
